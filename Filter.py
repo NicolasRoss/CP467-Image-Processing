@@ -9,7 +9,6 @@ imgarr = np.array(img)
 kernel = [[-1, -1, -1],
           [-1, 8, -1],
           [-1, -1, -1]]
-size = sum(len(x) for x in kernel)
 
 # Initializes a temperary array and the output array.
 width, height = imgarr.shape
@@ -28,5 +27,9 @@ for i in range(0, width):
                        (kernel[1][0] * tmpArr[i + 1][j]) + (kernel[1][1] * tmpArr[i + 1][j + 1]) + (kernel[1][2] * tmpArr[i + 1][j + 2]) + \
                        (kernel[2][0] * tmpArr[i + 2][j]) + (kernel[2][1] * tmpArr[i + 2][j + 1]) + (kernel[2][2] * tmpArr[i + 2][j + 2])
 
-output = Image.fromarray(np.asarray(outArr))
+output = Image.fromarray(outArr, 'L')
 output.save("output.png")
+
+
+
+
