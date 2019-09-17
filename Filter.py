@@ -24,9 +24,9 @@ for i in range(0, width):
 
 for i in range(0, width):
     for j in range(0, height):
-        outArr[i][j] = (kernel[0][0] * tmpArr[i][j]) + (kernel[0][1] * tmpArr[i + 1][j + 1]) + (kernel[0][2] * tmpArr[i + 2][j + 2]) + \
-                       (kernel[1][0] * tmpArr[i][j]) + (kernel[1][1] * tmpArr[i + 1][j + 1]) + (kernel[1][2] * tmpArr[i + 2][j + 2]) + \
-                       (kernel[2][0] * tmpArr[i][j]) + (kernel[2][1] * tmpArr[i + 1][j + 1]) + (kernel[2][2] * tmpArr[i + 2][j + 2])
+        outArr[i][j] = (kernel[0][0] * tmpArr[i][j]) + (kernel[0][1] * tmpArr[i][j + 1]) + (kernel[0][2] * tmpArr[i][j + 2]) + \
+                       (kernel[1][0] * tmpArr[i + 1][j]) + (kernel[1][1] * tmpArr[i + 1][j + 1]) + (kernel[1][2] * tmpArr[i + 1][j + 2]) + \
+                       (kernel[2][0] * tmpArr[i + 2][j]) + (kernel[2][1] * tmpArr[i + 2][j + 1]) + (kernel[2][2] * tmpArr[i + 2][j + 2])
 
 output = Image.fromarray(np.asarray(outArr))
 output.save("output.png")
