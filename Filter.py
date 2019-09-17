@@ -13,8 +13,8 @@ size = sum(len(x) for x in kernel)
 
 # Initializes a temperary array and the output array.
 width, height = imgarr.shape
-tmpArr = [[0 for x in range(height + 2)] for y in range(width + 2)] # Adds bordering 0's to prevent black border
-outArr = [[0 for x in range(height)] for y in range(width)]
+tmpArr = np.array([[0 for x in range(height + 2)] for y in range(width + 2)]).astype('int8') # Adds bordering 0's to prevent black border
+outArr = np.array([[0 for x in range(height)] for y in range(width)]).astype('int8)
 
 # Adds the pixel data to the temperary array.
 for i in range(0, width):
