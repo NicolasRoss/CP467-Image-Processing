@@ -1,140 +1,48 @@
-from PIL import Image
 import numpy as np
-import sys
+import cv2
+from PIL import Image
 
-def isWhite(imgarr, i , j):
-    return imgarr[i][j] == 255
 
-def inBounds(imgarr, i , j):
-    return i >= 0 and j >= 0 and i < len(imgarr) and j < len(imgarr[i])
+img = cv2.imread('rose.png')
+img = cv2.bitwise_not(img)
+grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-def countComponents(imgarr):
-    height, width = imgarr.shape
-    equivList = [0]
-    for i in range(height):
-        for j in range(width):
-            if not isWhite(imgarr, i, j):
-                up = imgarr[i - 1][j]
-                left = imgarr[i][j - 1]
-                upleft = imgarr[i - 1][j - 1]
+img = cv2.threshold(grey, 127, 255, cv2.THRESH_BINARY)[1]
+ret, labels = cv2.connectedComponents(img)
 
-                # surrounding pixels are inbounds
-                if inBounds(imgarr, i - 1, j) and inBounds(imgarr, i, j - 1) and inBounds(imgarr, i - 1, j - 1):
-                    # if surrounding pixels black
-                    if not isWhite(imgarr, i - 1, j) and not isWhite(imgarr, i, j - 1) and not isWhite(imgarr, i - 1, j - 1):
-                        imgarr[i][j] = min(up, min(left, upleft))
-                    # if upper-left and upper pixel black
-                    elif not isWhite(imgarr, i - 1, j) and isWhite(imgarr, i, j - 1) and not isWhite(imgarr, i - 1, j - 1):
-                        imgarr[i][j] = min(up, upleft)
-                    # if left and upper-left pixel black
-                    elif isWhite(imgarr, i - 1, j) and not isWhite(imgarr, i, j - 1) and not isWhite(imgarr, i - 1, j - 1):
-                        imgarr[i][j] = min(left, upleft)
-                    # if left and upper pixel black
-                    elif not isWhite(imgarr, i - 1, j) and not isWhite(imgarr, i, j - 1) and isWhite(imgarr, i - 1, j - 1):
-                        minP = min(left, up)
-                        maxP = max(left, up)
-                        imgarr[i][j] = minP
-                        equivList[maxP] = equivList[minP] if equivList[minP] < equivList[maxP] else equivList[maxP]
+def imshow_components(labels):
+    # Map component labels to hue val
+    label_hue = np.uint8(179*labels/np.max(labels))
+    blank_ch = 255*np.ones_like(label_hue)
+    labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
 
-                    # if upper-left pixel black
-                    elif isWhite(imgarr, i - 1, j) and isWhite(imgarr, i, j - 1) and not isWhite(imgarr, i - 1, j - 1):
-                        imgarr[i][j] = upleft
-                    # if left pixel black
-                    elif isWhite(imgarr, i - 1, j) and not isWhite(imgarr, i, j - 1) and isWhite(imgarr, i - 1, j - 1):
-                        imgarr[i][j] = left
-                    # if upper pixel black
-                    elif not isWhite(imgarr, i - 1, j) and isWhite(imgarr, i, j - 1) and isWhite(imgarr, i - 1, j - 1):
-                        imgarr[i][j] = up
-                    # if none are black
-                    elif isWhite(imgarr, i - 1, j) and isWhite(imgarr, i, j - 1) and isWhite(imgarr, i - 1, j - 1):
-                        equivList.append(len(equivList))
-                        imgarr[i][j] = len(equivList) - 1
-                # upper pixels not in bounds
-                elif not inBounds(imgarr, i - 1, j) and inBounds(imgarr, i, j - 1) and not inBounds(imgarr, i - 1, j - 1):
-                    # if left pixel black
-                    if not isWhite(imgarr, i, j - 1):
-                        imgarr[i][j] = left
-                    # if left pixel white
-                    elif isWhite(imgarr, i, j - 1):
-                        equivList.append(len(equivList))
-                        imgarr[i][j] = len(equivList) - 1
-                # left pixels not in bounds
-                elif inBounds(imgarr, i - 1, j) and not inBounds(imgarr, i, j - 1) and not inBounds(imgarr, i - 1, j - 1):
-                    # if upper pixel black
-                    if not isWhite(imgarr, i - 1, j):
-                        imgarr[i][j] = up
-                    # if upper pixel white
-                    elif isWhite(imgarr, i - 1, j):
-                        equivList.append(len(equivList))
-                        imgarr[i][j] = len(equivList) - 1
-                # no pixels are in bounds
-                elif not inBounds(imgarr, i - 1, j) and not inBounds(imgarr, i, j - 1) and not inBounds(imgarr, i - 1, j - 1):
-                    #if pixel is black
-                    equivList.append(len(equivList))
-                    imgarr[i][j] = len(equivList) - 1
-  
-            elif isWhite(imgarr, i , j):
-                if not isWhite(imgarr, i - 1, j) and not isWhite(imgarr, i, j - 1):
-                    minP = min(imgarr[i - 1][j], imgarr[i][j - 1])
-                    maxP = max(imgarr[i - 1][j], imgarr[i][j - 1])
-                    equivList[minP] = min(equivList[minP], equivList[maxP])
+    # cvt to BGR for display
+    labeled_img = cv2.cvtColor(labeled_img, cv2.COLOR_HSV2BGR)
 
-    return imgarr, equivList
+    # set bg label to black
+    labeled_img[label_hue==0] = 0
 
-def updateComp(imgarr, equivList):
-    height, width = imgarr.shape
-    for i in range(height):
-        for j in range(width):
-            pixel = imgarr[i][j]
+    cv2.imshow('labeled.png', labeled_img)
+    cv2.waitKey()
 
-            if not isWhite(imgarr, i , j) and pixel > equivList[pixel]:
-                imgarr[i][j] = equivList[pixel]
 
-    return imgarr
 
-def countBlackPixels(imgarr, equivList):
-    count = [0]
-    for _ in range(1, len(equivList)):
-            count.append(0)
+def countPixels(labels):
+    counts = dict()
+    for label in labels:
+        # print(label)
+        for num in label:
+            # print(type(num))
+            if(int(num) != 0):
+                if num not in counts:
+                    counts[num] = 1
+                else:
+                    counts[num] += 1
+    return counts
 
-    height, width = imgarr.shape
-    for i in range(0, height):
-        for j in range(0, width):
-            if (imgarr[i][j] != 255 and imgarr[i][j] != 0):
-                count[imgarr[i][j]] += 1
-    return count
 
-def main():
-    # Opens the image and sets its pixel data to an array.
-    img = Image.open('output.png').convert('L')
-    imgarr = np.array(img)
-    # imgarr = np.array([[255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
-    #                    [255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
-    #                    [255, 255, 255, 255, 255, 255,   0,   0,   0, 255],
-    #                    [255, 255, 255, 255, 255, 255,   0,   0,   0,   0],
-    #                    [255, 255, 255, 255,   0,   0,   0, 255,   0,   0],
-    #                    [255,   0, 255, 255,   0,   0, 255, 255,   0, 255],
-    #                    [255, 255,   0, 255,   0, 255,   0, 255, 255, 255],
-    #                    [255, 255, 255,   0,   0, 255, 255, 255, 255, 255],
-    #                    [255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
-    #                    [255, 255, 255, 255, 255, 255, 255, 255, 255, 255]])
-    
-    imgarr, equivList = countComponents(imgarr)
-    imgarr = updateComp(imgarr, equivList)
-    count = countBlackPixels(imgarr, equivList)
-    f = open("test.txt", "w+")
-    height, width = imgarr.shape
-    for i in range(height):
-        for j in range(width):
-            f.write("{0:0=3d}, ".format(imgarr[i][j]))
-        f.write("\n")
-    
-    print(equivList)
-    group = 1
-    for i in range(len(count)):
-        if (count[i] > 0):
-            print("Connected Region: {} Pixel Count: {}".format(group, count[i]))
-            group += 1 
+imshow_components(labels)
 
-if __name__ == "__main__":
-    main()
+counts = countPixels(labels)
+
+print(counts)
